@@ -7,6 +7,7 @@ import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
 import com.UserSchedule.UserSchedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Schedule", description = "Quản lý lịch họp, lịch làm việc")
+@SecurityRequirement(name = "bearerAuth")
 public class ScheduleController {
     ScheduleService scheduleService;
 

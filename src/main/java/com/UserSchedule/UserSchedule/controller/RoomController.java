@@ -6,6 +6,7 @@ import com.UserSchedule.UserSchedule.dto.response.RoomResponse;
 import com.UserSchedule.UserSchedule.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -19,9 +20,9 @@ import java.util.List;
 @RequestMapping("/rooms")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Room", description = "Quản lý phòng họp")
 public class RoomController {
-
     RoomService roomService;
 
     @PostMapping

@@ -22,6 +22,7 @@ import static lombok.AccessLevel.PRIVATE;
 @RequiredArgsConstructor
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 @Tag(name = "Role", description = "Phân quyền và quản lý vai trò người dùng")
+@SecurityRequirement(name = "bearerAuth")
 public class RoleController {
 
     RoleService roleService;

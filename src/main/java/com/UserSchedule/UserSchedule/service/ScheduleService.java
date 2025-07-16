@@ -41,6 +41,7 @@ public class ScheduleService {
     RoomRepository roomRepository;
     ScheduleMapper scheduleMapper;
     SecurityUtils securityUtils;
+
     @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
     @Transactional
     public ScheduleResponse createSchedule(ScheduleCreationRequest request) {

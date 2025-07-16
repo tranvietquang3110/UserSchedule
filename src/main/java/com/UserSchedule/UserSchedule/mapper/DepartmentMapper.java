@@ -1,10 +1,8 @@
 package com.UserSchedule.UserSchedule.mapper;
 
 import com.UserSchedule.UserSchedule.dto.request.DepartmentCreationRequest;
-import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
 import com.UserSchedule.UserSchedule.dto.response.DepartmentResponse;
 import com.UserSchedule.UserSchedule.entity.Department;
-import com.UserSchedule.UserSchedule.entity.Schedule;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

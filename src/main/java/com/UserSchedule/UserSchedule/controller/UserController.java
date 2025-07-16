@@ -10,6 +10,7 @@ import com.UserSchedule.UserSchedule.dto.response.UserResponse;
 import com.UserSchedule.UserSchedule.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -62,6 +63,7 @@ public class UserController {
             Trả về toàn bộ danh sách người dùng.
             **Yêu cầu phân quyền ADMIN.**
             """)
+    @SecurityRequirement(name = "bearerAuth")
     public ApiResponse<List<UserResponse>> getUsers() {
         return ApiResponse.<List<UserResponse>>builder()
                 .message("Get Users Successfully")
@@ -69,6 +71,7 @@ public class UserController {
     }
 
     @GetMapping("/my-profile")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Lấy thông tin cá nhân", description = """
             Trả về thông tin người dùng hiện tại từ token.
             **Yêu cầu đã đăng nhập (ROLE_USER trở lên).**
@@ -80,6 +83,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Lấy thông tin user theo ID",
             description = """
@@ -98,6 +102,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Cập nhât thông tin user theo ID",
             description = """
