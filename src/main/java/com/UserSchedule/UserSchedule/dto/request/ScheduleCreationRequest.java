@@ -33,5 +33,5 @@ public class ScheduleCreationRequest {
     Integer roomId;
 
     @NotEmpty(message = "PARTICIPANT_IDS_NOT_FILL")
-    Set<Integer> participantIds; // userId của các participant
+    Set<String> participantIds; // userId của các participant
 }

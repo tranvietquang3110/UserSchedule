@@ -56,17 +56,17 @@ public class ScheduleController {
                 .build();
     }
 
-    @GetMapping("/users/{userId}")
+    @GetMapping("/users/{keycloakId}")
     @Operation(
-            summary = "Lấy danh sách lịch theo userId",
+            summary = "Lấy danh sách lịch theo keycloakId",
             description = """
             Trả về tất cả lịch của người dùng dựa trên userId.
             **Không yêu cầu quyền đặc biệt (chỉ cần đăng nhập).**
             """)
-    public ApiResponse<List<ScheduleResponse>> getScheduleByUserId(@PathVariable int userId) {
+    public ApiResponse<List<ScheduleResponse>> getScheduleByUserId(@PathVariable String keycloakId) {
         return ApiResponse.<List<ScheduleResponse>>builder()
                 .message("Get schedules by userId successfully")
-                .data(scheduleService.getSchedulesByUserId(userId))
+                .data(scheduleService.getSchedulesByKeycloakId(keycloakId))
                 .build();
     }
 

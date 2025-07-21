@@ -1,10 +1,7 @@
 package com.UserSchedule.UserSchedule.service;
 
 import com.UserSchedule.UserSchedule.dto.identity.*;
-import com.UserSchedule.UserSchedule.dto.request.AssignRoleRequest;
-import com.UserSchedule.UserSchedule.dto.request.LoginRequest;
-import com.UserSchedule.UserSchedule.dto.request.UserCreationRequest;
-import com.UserSchedule.UserSchedule.dto.request.UserUpdateRequest;
+import com.UserSchedule.UserSchedule.dto.request.*;
 import com.UserSchedule.UserSchedule.dto.response.TokenResponse;
 import com.UserSchedule.UserSchedule.dto.response.UserResponse;
 import com.UserSchedule.UserSchedule.entity.Department;
@@ -16,6 +13,7 @@ import com.UserSchedule.UserSchedule.repository.DepartmentRepository;
 import com.UserSchedule.UserSchedule.repository.IdentityClient;
 import com.UserSchedule.UserSchedule.repository.UserRepository;
 import com.UserSchedule.UserSchedule.utils.SecurityUtils;
+import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -102,8 +100,39 @@ public class UserService {
         form.add("client_id", clientId);
         form.add("client_secret", clientSecret);
         form.add("scope", scope);
+        try {
+            TokenExchangeResponse token = identityClient.getClientToken(form);
+            return TokenResponse.builder().accessToken(token.getAccessToken()).build();
+        } catch (FeignException.FeignClientException ex) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+    }
+
+    public void changePassword(String keycloakId, ChangePasswordRequest request) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        String username = user.getUsername();
+        LoginRequest loginRequest = LoginRequest.builder()
+                        .username(username)
+                        .password(request.getOldPassword())
+                        .build();
+        try {
+            login(loginRequest);
+        } catch (AppException e) {
+            throw new AppException(ErrorCode.INVALID_OLD_PASSWORD);
+        }
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+
+        form.add("grant_type", "client_credentials");
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("scope", scope);
         TokenExchangeResponse token = identityClient.getClientToken(form);
-        return TokenResponse.builder().accessToken(token.getAccessToken()).build();
+        String accessToken = "Bearer " + token.getAccessToken();
+        CredentialRepresentation credentialRepresentation = CredentialRepresentation.builder()
+                        .value(request.getNewPassword())
+                        .build();
+        identityClient.resetUserPassword(accessToken, user.getKeycloakId(), credentialRepresentation);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -126,8 +155,8 @@ public class UserService {
     }
 
     @PreAuthorize("hasAuthority('USER')")
-    public UserResponse getUserById(int id) {
-        User user = userRepository.findByUserId(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    public UserResponse getUserById(String id) {
+        User user = userRepository.findByKeycloakId(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return userMapper.toUserResponse(user);
     }
 
@@ -148,12 +177,12 @@ public class UserService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
-    public UserResponse updateUserProfile(UserUpdateRequest request, int userId) {
+    public UserResponse updateUserProfile(UserUpdateRequest request, String keycloakId) {
         User currentUser = securityUtils.getCurrentUser();
-        if (currentUser.getUserId() != userId && !securityUtils.isAdmin()) {
+        if (!Objects.equals(currentUser.getKeycloakId(), keycloakId) && !securityUtils.isAdmin()) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
         userMapper.updateUserFromUpdateRequest(request, user);
         Department department = departmentRepository.findByDepartmentId(request.getDepartmentId())

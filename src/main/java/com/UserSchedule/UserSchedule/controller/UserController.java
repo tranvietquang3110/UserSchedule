@@ -1,9 +1,6 @@
 package com.UserSchedule.UserSchedule.controller;
 
-import com.UserSchedule.UserSchedule.dto.request.AssignRoleRequest;
-import com.UserSchedule.UserSchedule.dto.request.LoginRequest;
-import com.UserSchedule.UserSchedule.dto.request.UserCreationRequest;
-import com.UserSchedule.UserSchedule.dto.request.UserUpdateRequest;
+import com.UserSchedule.UserSchedule.dto.request.*;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.TokenResponse;
 import com.UserSchedule.UserSchedule.dto.response.UserResponse;
@@ -82,7 +79,7 @@ public class UserController {
                 .data(userService.getMyProfile()).build();
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{keycloakId}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Lấy thông tin user theo ID",
@@ -91,17 +88,17 @@ public class UserController {
                 **Yêu cầu đã đăng nhập (ROLE_USER trở lên).**
                 """,
             parameters = {
-                    @Parameter(name = "userId", description = "ID của người dùng cần lấy thông tin", example = "1")
+                    @Parameter(name = "keycloakId", description = "ID của người dùng cần lấy thông tin", example = "1")
             }
     )
-    public ApiResponse<UserResponse> getUser(@PathVariable int userId) {
+    public ApiResponse<UserResponse> getUser(@PathVariable String keycloakId) {
         return  ApiResponse.<UserResponse>builder()
                 .message("Get user successfully")
-                .data(userService.getUserById(userId))
+                .data(userService.getUserById(keycloakId))
                 .build();
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping("/{keycloakId}")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Cập nhât thông tin user theo ID",
@@ -110,14 +107,23 @@ public class UserController {
                 **Yêu cầu là chính USER đó hoặc ADMIN**
                 """,
             parameters = {
-                    @Parameter(name = "userId", description = "ID của người dùng cần lấy thông tin", example = "1")
+                    @Parameter(name = "keycloakId", description = "ID của người dùng cần lấy thông tin", example = "1")
             }
     )
-    public ApiResponse<UserResponse> updateProfile(@PathVariable int userId, @RequestBody @Valid UserUpdateRequest request) {
+    public ApiResponse<UserResponse> updateProfile(@PathVariable String keycloakId, @RequestBody @Valid UserUpdateRequest request) {
         return  ApiResponse.<UserResponse>builder()
                 .message("Update user successfully")
-                .data(userService.updateUserProfile(request, userId))
+                .data(userService.updateUserProfile(request, keycloakId))
                 .build();
+    }
+
+    @PutMapping("/{userId}/change-password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable String userId,
+            @RequestBody ChangePasswordRequest request
+    ) {
+        userService.changePassword(userId, request);
+        return ResponseEntity.ok().build();
     }
 }
 

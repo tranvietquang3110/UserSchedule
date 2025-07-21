@@ -3,7 +3,10 @@ package com.UserSchedule.UserSchedule.controller;
 import com.UserSchedule.UserSchedule.dto.request.RoomRequest;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.RoomResponse;
+import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
+import com.UserSchedule.UserSchedule.dto.roomRepository.RoomWithStatus;
 import com.UserSchedule.UserSchedule.service.RoomService;
+import com.UserSchedule.UserSchedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,7 +27,7 @@ import java.util.List;
 @Tag(name = "Room", description = "Quản lý phòng họp")
 public class RoomController {
     RoomService roomService;
-
+    ScheduleService scheduleService;
     @PostMapping
     @Operation(
             summary = "Tạo phòng",
@@ -100,6 +103,40 @@ public class RoomController {
         return ApiResponse.<RoomResponse>builder()
                 .message("Get room by ID successfully")
                 .data(roomService.getRoomById(roomId))
+                .build();
+    }
+
+    @GetMapping("/with-status")
+    @Operation(
+            summary = "Lấy danh sách phòng kèm trạng thái BOOKED / UNBOOKED",
+            description = """
+    Trả về danh sách tất cả phòng với trạng thái hiện tại:
+    - `BOOKED`: đang có lịch sử dụng (endTime > hiện tại)
+    - `UNBOOKED`: không có lịch nào sắp tới
+
+    **Không yêu cầu quyền đặc biệt (chỉ cần đăng nhập).**
+    """
+    )
+    public ApiResponse<List<RoomWithStatus>> getRoomsWithStatus() {
+        return ApiResponse.<List<RoomWithStatus>>builder()
+                .message("Get all rooms with status successfully")
+                .data(roomService.getRoomWithStatus())
+                .build();
+    }
+
+    @GetMapping("/{roomId}/reservations/history")
+    @Operation(
+            summary = "Lấy lịch sử đặt phòng",
+            description = """
+    Trả về danh sách các lịch đã từng đặt cho phòng theo roomId.
+    Có thể bao gồm cả quá khứ và tương lai.
+    **Yêu cầu quyền: ADMIN hoặc MANAGER**
+    """
+    )
+    public ApiResponse<List<ScheduleResponse>> getRoomReservationHistory(@PathVariable int roomId) {
+        return ApiResponse.<List<ScheduleResponse>>builder()
+                .message("Get room reservation history successfully")
+                .data(roomService.getRoomReservationHistory(roomId))
                 .build();
     }
 }

@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class LoginRequest {
     @NotBlank(message = "USERNAME_NOT_FILL")
     String username;

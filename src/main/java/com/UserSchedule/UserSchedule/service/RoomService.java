@@ -2,17 +2,24 @@ package com.UserSchedule.UserSchedule.service;
 
 import com.UserSchedule.UserSchedule.dto.request.RoomRequest;
 import com.UserSchedule.UserSchedule.dto.response.RoomResponse;
+import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
+import com.UserSchedule.UserSchedule.dto.roomRepository.RoomWithStatus;
 import com.UserSchedule.UserSchedule.entity.Room;
+import com.UserSchedule.UserSchedule.entity.Schedule;
 import com.UserSchedule.UserSchedule.exception.AppException;
 import com.UserSchedule.UserSchedule.exception.ErrorCode;
 import com.UserSchedule.UserSchedule.mapper.RoomMapper;
+import com.UserSchedule.UserSchedule.mapper.ScheduleMapper;
 import com.UserSchedule.UserSchedule.repository.RoomRepository;
+import com.UserSchedule.UserSchedule.repository.ScheduleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +29,8 @@ import java.util.Optional;
 public class RoomService {
     RoomRepository roomRepository;
     RoomMapper roomMapper;
+    ScheduleMapper scheduleMapper;
+    private final ScheduleRepository scheduleRepository;
 
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public RoomResponse createRoom(RoomRequest roomRequest) {
@@ -72,5 +81,14 @@ public class RoomService {
 
     public List<RoomResponse> getAll() {
         return roomMapper.toRoomResponseList(roomRepository.findAllByIsUsedTrue());
+    }
+
+    public List<RoomWithStatus> getRoomWithStatus() {
+        return roomRepository.findRoomsWithStatus(LocalDateTime.now());
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    public List<ScheduleResponse> getRoomReservationHistory(int roomId) {
+        return scheduleMapper.toScheduleResponseList(scheduleRepository.findByRoom_RoomId(roomId));
     }
 }

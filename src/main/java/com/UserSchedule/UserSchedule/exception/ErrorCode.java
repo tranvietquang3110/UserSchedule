@@ -32,6 +32,8 @@ public enum ErrorCode {
     ROOM_CAPACITY_NOT_NULL(2022, "Room capacity must not be null", HttpStatus.BAD_REQUEST),
     ROOM_CAPACITY_MUST_BE_POSITIVE(2023, "Room capacity must be greater than 0", HttpStatus.BAD_REQUEST),
     CREATED_BY_NOT_FILL(2024, "Created by must not be blank", HttpStatus.BAD_REQUEST),
+    NEW_PASSWORD_NOT_FILL(2025, "New password must not be blank", HttpStatus.BAD_REQUEST),
+    OLD_PASSWORD_NOT_FILL(2026, "Old password must not be blank", HttpStatus.BAD_REQUEST),
     // ==== Business Logic Errors (2100+) ====
     USERNAME_EXISTED(2100, "Username already exists", HttpStatus.BAD_REQUEST),
     EMAIL_EXISTED(2101, "Email already exists", HttpStatus.BAD_REQUEST),
@@ -47,6 +49,7 @@ public enum ErrorCode {
     // ==== Auth Errors (2200+) ====
     UNAUTHENTICATED(2200, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2201, "You don't have permission", HttpStatus.FORBIDDEN),
+    INVALID_OLD_PASSWORD(2202, "Invalid old password", HttpStatus.UNAUTHORIZED),
 
     // ==== System Errors (2900+) ====
     INVALID_KEY(2900, "Invalid key", HttpStatus.BAD_REQUEST),

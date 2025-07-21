@@ -46,17 +46,17 @@ public class ScheduleService {
     @Transactional
     public ScheduleResponse createSchedule(ScheduleCreationRequest request) {
         User currentUser = securityUtils.getCurrentUser();
-
+        List<User> userParticipants = userRepository.findAllByKeycloakIdIn(request.getParticipantIds());
         // Kiểm tra xem user hiện tại có trùng lịch không
         List<Schedule> conflicts = scheduleRepository.findConflictingSchedulesByParticipants(
-                request.getParticipantIds(), request.getStartTime(), request.getEndTime());
+                userParticipants.stream().map(User::getUserId).toList(), request.getStartTime(), request.getEndTime());
 
         if (!conflicts.isEmpty()) {
             throw new AppException(ErrorCode.SCHEDULE_CONFLICT);
         }
 
         // Lấy danh sách participants từ ID
-        Set<User> participants = new HashSet<>(userRepository.findAllById(request.getParticipantIds()));
+        Set<User> participants = new HashSet<>(userParticipants);
         if (participants.isEmpty()) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
@@ -139,11 +139,11 @@ public class ScheduleService {
         return scheduleMapper.toScheduleResponse(scheduleRepository.save(schedule));
     }
 
-    public List<ScheduleResponse> getSchedulesByUserId(Integer userId) {
-        userRepository.findByUserId(userId)
+    public List<ScheduleResponse> getSchedulesByKeycloakId(String keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        List<Schedule> schedules = scheduleRepository.findSchedulesByUserId(userId);
+        List<Schedule> schedules = scheduleRepository.findSchedulesByUserId(user.getUserId());
         return scheduleMapper.toScheduleResponseList(schedules);
     }
 
@@ -157,15 +157,16 @@ public class ScheduleService {
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
 
         checkPermission(currentUser, schedule);
+        List<User> userParticipants = userRepository.findAllByKeycloakIdIn(request.getParticipantIds());
         List<Schedule> conflicts = scheduleRepository.findConflictingSchedulesByParticipantsExceptCurrent(
-                request.getParticipantIds(), request.getStartTime(), request.getEndTime(), scheduleId);
+                userParticipants.stream().map(User::getUserId).toList(), request.getStartTime(), request.getEndTime(), scheduleId);
 
 
         if (!conflicts.isEmpty()) {
             throw new AppException(ErrorCode.SCHEDULE_CONFLICT);
         }
 
-        Set<User> newParticipants = new HashSet<>(userRepository.findAllById(request.getParticipantIds()));
+        Set<User> newParticipants = new HashSet<>(userParticipants);
         if (newParticipants.isEmpty()) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
@@ -223,4 +224,5 @@ public class ScheduleService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
     }
+
 }

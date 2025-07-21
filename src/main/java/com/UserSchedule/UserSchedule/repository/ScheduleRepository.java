@@ -70,4 +70,5 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             @Param("endTime") LocalDateTime endTime,
             @Param("currentScheduleId") Integer currentScheduleId
     );
+    List<Schedule> findByRoom_RoomId(Integer roomId);
 }

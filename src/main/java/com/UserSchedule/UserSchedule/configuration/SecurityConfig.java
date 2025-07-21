@@ -20,7 +20,8 @@ public class SecurityConfig {
             "/users/login",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"};
+            "/swagger-ui.html",
+            "/ai-agent/**"};
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_ENDPOINTS)

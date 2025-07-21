@@ -1,9 +1,6 @@
 package com.UserSchedule.UserSchedule.repository;
 
-import com.UserSchedule.UserSchedule.dto.identity.KeycloakUserUpdateRequest;
-import com.UserSchedule.UserSchedule.dto.identity.RoleRepresentation;
-import com.UserSchedule.UserSchedule.dto.identity.TokenExchangeResponse;
-import com.UserSchedule.UserSchedule.dto.identity.UserCreationParam;
+import com.UserSchedule.UserSchedule.dto.identity.*;
 import com.UserSchedule.UserSchedule.enum_type.RoleType;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -50,5 +47,11 @@ public interface IdentityClient {
             @RequestHeader("Authorization") String token,
             @PathVariable("userId") String userId,
             @RequestBody KeycloakUserUpdateRequest request
+    );
+    @PutMapping("/admin/realms/UserSchedule/users/{userId}/reset-password")
+    void resetUserPassword(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("userId") String userId,
+            @RequestBody CredentialRepresentation passwordRequest
     );
 }
