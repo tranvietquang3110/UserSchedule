@@ -23,7 +23,7 @@ import java.util.Optional;
 public class DepartmentService {
     DepartmentRepository departmentRepository;
     DepartmentMapper departmentMapper;
-    private final RoomRepository roomRepository;
+    RoomRepository roomRepository;
 
     @PreAuthorize("hasAuthority('ADMIN')")
     public DepartmentResponse createDepartment(DepartmentCreationRequest request) {

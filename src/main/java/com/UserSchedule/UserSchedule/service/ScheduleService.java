@@ -5,6 +5,7 @@ import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
+import com.UserSchedule.UserSchedule.entity.Department;
 import com.UserSchedule.UserSchedule.entity.Room;
 import com.UserSchedule.UserSchedule.entity.Schedule;
 import com.UserSchedule.UserSchedule.entity.User;
@@ -12,6 +13,7 @@ import com.UserSchedule.UserSchedule.enum_type.ScheduleType;
 import com.UserSchedule.UserSchedule.exception.AppException;
 import com.UserSchedule.UserSchedule.exception.ErrorCode;
 import com.UserSchedule.UserSchedule.mapper.ScheduleMapper;
+import com.UserSchedule.UserSchedule.repository.DepartmentRepository;
 import com.UserSchedule.UserSchedule.repository.RoomRepository;
 import com.UserSchedule.UserSchedule.repository.ScheduleRepository;
 import com.UserSchedule.UserSchedule.repository.UserRepository;
@@ -38,6 +40,7 @@ public class ScheduleService {
     RoomRepository roomRepository;
     ScheduleMapper scheduleMapper;
     SecurityUtils securityUtils;
+    DepartmentRepository departmentRepository;
 
     @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
     @Transactional
@@ -83,9 +86,11 @@ public class ScheduleService {
 
     @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
     @Transactional
-    public ScheduleResponse createScheduleByDepartment(ScheduleByDepartmentRequest request, Integer departmentId) {
+    public ScheduleResponse createScheduleByDepartment(ScheduleByDepartmentRequest request, String departmentName) {
         User currentUser = securityUtils.getCurrentUser();
-
+        Department department = departmentRepository.findByName(departmentName)
+                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
+        int departmentId = department.getDepartmentId();
         boolean isAdmin = securityUtils.isAdmin();
         boolean isSameDepartment = Objects.equals(currentUser.getDepartment().getDepartmentId(), departmentId);
 
@@ -120,16 +125,15 @@ public class ScheduleService {
                 .createdBy(currentUser)
                 .build();
 
-        if (request.getType() == ScheduleType.OFFLINE) {
-            List<Schedule> roomConflicts = scheduleRepository.findConflictingSchedulesByRoom(
-                    request.getRoomId(), request.getStartTime(), request.getEndTime());
 
+        if (request.getType() == ScheduleType.OFFLINE) {
+            Room room = roomRepository.findByName(request.getRoomName())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+            List<Schedule> roomConflicts = scheduleRepository.findConflictingSchedulesByRoom(
+                    room.getRoomId(), request.getStartTime(), request.getEndTime());
             if (!roomConflicts.isEmpty()) {
                 throw new AppException(ErrorCode.ROOM_ALREADY_BOOKED);
             }
-
-            Room room = roomRepository.findByRoomId(request.getRoomId())
-                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
             schedule.setRoom(room);
         }
 

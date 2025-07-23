@@ -28,5 +28,5 @@ public class ScheduleByDepartmentRequest {
     LocalDateTime endTime;
 
     @NotNull(message = "ROOM_ID_NOT_FILL")
-    Integer roomId;
+    String roomName;
 }

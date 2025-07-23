@@ -42,7 +42,7 @@ public class ScheduleController {
                 .build();
     }
 
-    @PostMapping("/departments/{departmentId}")
+    @PostMapping("/departments/{departmentName}")
     @Operation(
             summary = "Tạo lịch cho phòng ban",
             description = """
@@ -50,11 +50,11 @@ public class ScheduleController {
             **Yêu cầu quyền: MANAGER (trong cùng phòng ban) hoặc ADMIN**
             """)
     public ApiResponse<ScheduleResponse> createScheduleForDepartment(
-            @PathVariable Integer departmentId,
+            @PathVariable String departmentName,
             @RequestBody @Valid ScheduleByDepartmentRequest request) {
         return ApiResponse.<ScheduleResponse>builder()
                 .message("Schedule created for department successfully")
-                .data(scheduleService.createScheduleByDepartment(request, departmentId))
+                .data(scheduleService.createScheduleByDepartment(request, departmentName))
                 .build();
     }
 
