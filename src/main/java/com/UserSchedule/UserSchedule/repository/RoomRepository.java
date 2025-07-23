@@ -31,4 +31,18 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     GROUP BY r.name, r.location, r.capacity
     """)
     List<RoomWithStatus> findRoomsWithStatus(@Param("now") LocalDateTime now);
+
+    @Query("""
+        SELECT r FROM Room r
+        WHERE r.roomId NOT IN (
+            SELECT s.room.roomId
+            FROM Schedule s
+            WHERE s.startTime < :endTime
+              AND s.endTime > :startTime
+        )
+    """)
+    List<Room> findAvailableRoomsBetween(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
 }

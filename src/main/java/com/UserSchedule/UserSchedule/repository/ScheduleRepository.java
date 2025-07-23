@@ -1,5 +1,6 @@
 package com.UserSchedule.UserSchedule.repository;
 
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
 import com.UserSchedule.UserSchedule.entity.Schedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -8,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query("""
@@ -71,4 +71,71 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             @Param("currentScheduleId") Integer currentScheduleId
     );
     List<Schedule> findByRoom_RoomId(Integer roomId);
+
+
+    @Query(value = """
+WITH schedule_with_bounds AS (
+    SELECT 
+        s.start_time,
+        s.end_time
+    FROM schedules s
+    JOIN rooms r ON s.room_id = r.room_id
+    WHERE r.name = :roomName
+      AND s.start_time < :endTime
+      AND s.end_time > :startTime
+),
+ordered_schedules AS (
+    SELECT *,
+           LAG(end_time) OVER (ORDER BY start_time) AS previous_end_time
+    FROM schedule_with_bounds
+),
+free_slots AS (
+    SELECT 
+        previous_end_time AS start_time,
+        start_time AS end_time
+    FROM ordered_schedules
+    WHERE previous_end_time IS NOT NULL
+),
+first_slot AS (
+    SELECT 
+        :startTime AS start_time,
+        MIN(start_time) AS end_time
+    FROM schedule_with_bounds
+),
+last_slot AS (
+    SELECT 
+        MAX(end_time) AS start_time,
+        :endTime AS end_time
+    FROM schedule_with_bounds
+)
+SELECT 
+    start_time AS startTime, 
+    end_time AS endTime 
+FROM free_slots
+WHERE start_time >= :startTime AND end_time <= :endTime
+
+UNION
+
+SELECT 
+    start_time AS startTime, 
+    end_time AS endTime 
+FROM first_slot 
+WHERE end_time > start_time AND end_time <= :endTime
+
+UNION
+
+SELECT 
+    start_time AS startTime, 
+    end_time AS endTime 
+FROM last_slot 
+WHERE end_time > start_time AND start_time >= :startTime
+
+ORDER BY startTime
+""", nativeQuery = true)
+    List<FreeTimeSlot> getAvailableSlotsBetween(
+            @Param("roomName") String roomName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
+
 }

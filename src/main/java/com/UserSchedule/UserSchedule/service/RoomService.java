@@ -91,4 +91,8 @@ public class RoomService {
     public List<ScheduleResponse> getRoomReservationHistory(int roomId) {
         return scheduleMapper.toScheduleResponseList(scheduleRepository.findByRoom_RoomId(roomId));
     }
+
+    public List<RoomResponse> getAvailableRoom(LocalDateTime startDate, LocalDateTime endDate) {
+        return roomMapper.toRoomResponseList(roomRepository.findAvailableRoomsBetween(startDate, endDate));
+    }
 }

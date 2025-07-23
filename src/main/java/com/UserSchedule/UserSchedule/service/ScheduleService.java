@@ -4,10 +4,10 @@ import com.UserSchedule.UserSchedule.dto.request.ScheduleByDepartmentRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
 import com.UserSchedule.UserSchedule.entity.Room;
 import com.UserSchedule.UserSchedule.entity.Schedule;
 import com.UserSchedule.UserSchedule.entity.User;
-import com.UserSchedule.UserSchedule.enum_type.RoleType;
 import com.UserSchedule.UserSchedule.enum_type.ScheduleType;
 import com.UserSchedule.UserSchedule.exception.AppException;
 import com.UserSchedule.UserSchedule.exception.ErrorCode;
@@ -21,16 +21,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -225,4 +222,7 @@ public class ScheduleService {
         }
     }
 
+    public List<FreeTimeSlot> getAvailableSlotsBetween(String roomName, LocalDateTime startTime, LocalDateTime endTime) {
+        return  scheduleRepository.getAvailableSlotsBetween(roomName, startTime, endTime);
+    }
 }

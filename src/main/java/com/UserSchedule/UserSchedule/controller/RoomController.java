@@ -15,8 +15,10 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -137,6 +139,19 @@ public class RoomController {
         return ApiResponse.<List<ScheduleResponse>>builder()
                 .message("Get room reservation history successfully")
                 .data(roomService.getRoomReservationHistory(roomId))
+                .build();
+    }
+
+    @GetMapping("/available")
+    public ApiResponse<List<RoomResponse>> getAvailableRooms(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        List<RoomResponse> availableRooms = roomService.getAvailableRoom(startDate, endDate);
+
+        return ApiResponse.<List<RoomResponse>>builder()
+                .message("Available rooms fetched successfully")
+                .data(availableRooms)
                 .build();
     }
 }

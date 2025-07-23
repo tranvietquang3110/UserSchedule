@@ -5,6 +5,7 @@ import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
 import com.UserSchedule.UserSchedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -111,6 +113,16 @@ public class ScheduleController {
         scheduleService.deleteSchedule(scheduleId);
         return ApiResponse.builder()
                 .message("Delete schedule successfully")
+                .build();
+    }
+
+    @GetMapping("/free/{roomName}")
+    public  ApiResponse<List<FreeTimeSlot>> getFreeTimeSlot
+            (@PathVariable String roomName, @RequestParam("startDate")LocalDateTime startDate
+                    , @RequestParam("endDate") LocalDateTime endDate) {
+        return ApiResponse.<List<FreeTimeSlot>>builder()
+                .message("Get successfully")
+                .data(scheduleService.getAvailableSlotsBetween(roomName, startDate, endDate))
                 .build();
     }
 }
