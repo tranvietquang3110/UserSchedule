@@ -1,5 +1,6 @@
 package com.UserSchedule.UserSchedule.service;
 
+import com.UserSchedule.UserSchedule.dto.request.SendMessageToAgentRequest;
 import com.UserSchedule.UserSchedule.dto.response.AIResponse;
 import com.UserSchedule.UserSchedule.entity.AIConversation;
 import com.UserSchedule.UserSchedule.entity.User;
@@ -13,23 +14,42 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class AIService {
     AIConversationRepository aiConversationRepository;
     AIConversationMapper aiConversationMapper;
     UserRepository userRepository;
-    public void askAI(String message, String keycloakId) {
+    @Value("${ai-agent.url}")
+    @NonFinal
+    String agentUrl;
+
+    public void askAI(String message, String keycloakId, String jwt) {
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        // Lấy số thứ tự message hiện tại của user
+        SendMessageToAgentRequest request = SendMessageToAgentRequest.builder()
+                .keycloakId(keycloakId)
+                .message(message)
+                .jwt(jwt)
+                .context(convertResponsesToString(getAIResponseByKeycloakId(keycloakId)))
+                .build();
+        log.info(request.toString());
         int order = aiConversationRepository.countByUser(user) + 1;
         AIConversation userMessage = AIConversation.builder()
                 .user(user)
@@ -38,6 +58,7 @@ public class AIService {
                 .role(AIConversationRoleType.USER.name())
                 .build();
         aiConversationRepository.save(userMessage);
+        callToAgent(request);
     }
 
     public List<AIResponse> getAIResponseByKeycloakId(String keycloakId) {
@@ -64,5 +85,27 @@ public class AIService {
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         aiConversationRepository.deleteByUser(user);
+    }
+
+    public String convertResponsesToString(List<AIResponse> responses) {
+        return responses.stream()
+                .sorted(Comparator.comparing(AIResponse::getOrder))
+                .map(r -> r.getRole() + ": " + r.getMessage())
+                .collect(Collectors.joining("\n"));
+    }
+
+    @Async
+    public void callToAgent(SendMessageToAgentRequest request) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<SendMessageToAgentRequest> requestEntity = new HttpEntity<>(request, headers);
+
+            restTemplate.postForEntity(agentUrl, requestEntity, Void.class);
+        } catch (Exception ex) {
+            // Ghi log lỗi
+            log.error("Failed to call AI agent: {}", ex.getMessage());
+        }
     }
 }

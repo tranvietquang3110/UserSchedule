@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -61,9 +62,15 @@ public class AIAgentController {
                     content = @Content(schema = @Schema(implementation = AiMessageRequest.class))
             )
             @RequestBody AiMessageRequest request,
-            @Parameter(description = "ID của người dùng", example = "123") @RequestParam String keycloakId
+            @Parameter(description = "ID của người dùng", example = "123") @RequestParam String keycloakId,
+            HttpServletRequest httpRequest
     ) {
-        aiConversationService.askAI(request.getAiMessage(), keycloakId);
+        String bearerToken = httpRequest.getHeader("Authorization");
+        String jwt = null;
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            jwt = bearerToken.substring(7);
+        }
+        aiConversationService.askAI(request.getAiMessage(), keycloakId, jwt);
         return ResponseEntity.ok("Message saved");
     }
 
