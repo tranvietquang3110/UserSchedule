@@ -45,4 +45,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+
+    @Query("SELECT r FROM Room r WHERE r.capacity >= :min AND r.capacity <= :max and r.isUsed")
+    List<Room> findRoomsByRangeCapacity(@Param("min") int min, @Param("max") int max);
 }

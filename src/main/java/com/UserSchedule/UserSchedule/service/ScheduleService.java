@@ -26,10 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -228,5 +225,38 @@ public class ScheduleService {
 
     public List<FreeTimeSlot> getAvailableSlotsBetween(String roomName, LocalDateTime startTime, LocalDateTime endTime) {
         return  scheduleRepository.getAvailableSlotsBetween(roomName, startTime, endTime);
+    }
+
+    @Transactional
+    public ScheduleResponse createSimpleSchedule(ScheduleByDepartmentRequest request) {
+        User currentUser = securityUtils.getCurrentUser();
+
+        // Khởi tạo lịch
+        Schedule.ScheduleBuilder builder = Schedule.builder()
+                .title(request.getTitle())
+                .type(request.getType())
+                .startTime(request.getStartTime())
+                .endTime(request.getEndTime())
+                .createdBy(currentUser)
+                .participants(Collections.emptySet()); // Không cần participants
+
+        // Nếu là OFFLINE thì cần room
+        if (request.getType() == ScheduleType.OFFLINE) {
+            Room room = roomRepository.findByName(request.getRoomName())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+
+            // Kiểm tra phòng đã bị đặt chưa
+            List<Schedule> roomConflicts = scheduleRepository.findConflictingSchedulesByRoom(
+                    room.getRoomId(), request.getStartTime(), request.getEndTime());
+
+            if (!roomConflicts.isEmpty()) {
+                throw new AppException(ErrorCode.ROOM_ALREADY_BOOKED);
+            }
+
+            builder.room(room);
+        }
+
+        Schedule saved = scheduleRepository.save(builder.build());
+        return scheduleMapper.toScheduleResponse(saved);
     }
 }

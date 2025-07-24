@@ -95,4 +95,11 @@ public class RoomService {
     public List<RoomResponse> getAvailableRoom(LocalDateTime startDate, LocalDateTime endDate) {
         return roomMapper.toRoomResponseList(roomRepository.findAvailableRoomsBetween(startDate, endDate));
     }
+
+    public List<RoomResponse> getRoomsByRangeCapacity(int min, int max) {
+        if (min > max) {
+            throw new AppException(ErrorCode.MIN_MAX_CAPACITY_CONFLICT);
+        }
+        return roomMapper.toRoomResponseList(roomRepository.findRoomsByRangeCapacity(min, max));
+    }
 }

@@ -46,6 +46,7 @@ public enum ErrorCode {
     ROOM_ALREADY_BOOKED(2108, "Room is already booked in this time range", HttpStatus.CONFLICT),
     SCHEDULE_NOT_FOUND(2109, "Schedule not found", HttpStatus.NOT_FOUND),
     ROOM_EXISTED(2110, "Room existed", HttpStatus.BAD_REQUEST),
+    MIN_MAX_CAPACITY_CONFLICT(2111, "min, max conflict!", HttpStatus.BAD_REQUEST),
     // ==== Auth Errors (2200+) ====
     UNAUTHENTICATED(2200, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2201, "You don't have permission", HttpStatus.FORBIDDEN),

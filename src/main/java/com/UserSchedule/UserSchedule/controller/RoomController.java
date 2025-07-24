@@ -154,4 +154,12 @@ public class RoomController {
                 .data(availableRooms)
                 .build();
     }
+
+    @GetMapping("/rooms/by-capacity")
+    public List<RoomResponse> getRoomsByCapacityRange(
+            @RequestParam int min,
+            @RequestParam int max
+    ) {
+        return roomService.getRoomsByRangeCapacity(min, max);
+    }
 }

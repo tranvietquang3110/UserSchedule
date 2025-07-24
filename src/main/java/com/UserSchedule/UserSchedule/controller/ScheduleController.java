@@ -125,4 +125,20 @@ public class ScheduleController {
                 .data(scheduleService.getAvailableSlotsBetween(roomName, startDate, endDate))
                 .build();
     }
+
+    @PostMapping("/simple")
+    @Operation(
+            summary = "Tạo lịch đơn giản (không có người tham gia/phòng ban)",
+            description = """
+        Tạo một lịch cá nhân hoặc lịch đơn giản không cần participant hoặc phòng ban.
+        **Yêu cầu quyền: bất kỳ người dùng đã đăng nhập.**
+        """)
+    public ApiResponse<ScheduleResponse> createSimpleSchedule(
+            @RequestBody @Valid ScheduleByDepartmentRequest request
+    ) {
+        return ApiResponse.<ScheduleResponse>builder()
+                .message("Simple schedule created successfully")
+                .data(scheduleService.createSimpleSchedule(request))
+                .build();
+    }
 }
