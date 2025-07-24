@@ -13,7 +13,6 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 public class SendMessageToAgentRequest {
-    String jwt;
     String keycloakId;
     String message;
     String context;

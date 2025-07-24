@@ -46,7 +46,6 @@ public class AIService {
         SendMessageToAgentRequest request = SendMessageToAgentRequest.builder()
                 .keycloakId(keycloakId)
                 .message(message)
-                .jwt(jwt)
                 .context(convertResponsesToString(getAIResponseByKeycloakId(keycloakId)))
                 .build();
         log.info(request.toString());
@@ -58,7 +57,7 @@ public class AIService {
                 .role(AIConversationRoleType.USER.name())
                 .build();
         aiConversationRepository.save(userMessage);
-        callToAgent(request);
+        callToAgent(request, jwt);
     }
 
     public List<AIResponse> getAIResponseByKeycloakId(String keycloakId) {
@@ -95,11 +94,12 @@ public class AIService {
     }
 
     @Async
-    public void callToAgent(SendMessageToAgentRequest request) {
+    public void callToAgent(SendMessageToAgentRequest request, String jwtToken) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + jwtToken);
             HttpEntity<SendMessageToAgentRequest> requestEntity = new HttpEntity<>(request, headers);
 
             restTemplate.postForEntity(agentUrl, requestEntity, Void.class);

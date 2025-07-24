@@ -98,38 +98,54 @@ free_slots AS (
 ),
 first_slot AS (
     SELECT 
-        :startTime AS start_time,
+        CAST(:startTime AS datetime) AS start_time,
         MIN(start_time) AS end_time
     FROM schedule_with_bounds
 ),
 last_slot AS (
     SELECT 
         MAX(end_time) AS start_time,
-        :endTime AS end_time
+        CAST(:endTime AS datetime) AS end_time
     FROM schedule_with_bounds
+),
+all_slots AS (
+    SELECT 
+        start_time AS startTime,
+        end_time AS endTime
+    FROM free_slots
+    WHERE start_time >= :startTime AND end_time <= :endTime
+
+    UNION
+
+    SELECT 
+        start_time AS startTime,
+        end_time AS endTime
+    FROM first_slot
+    WHERE end_time > start_time AND end_time <= :endTime
+
+    UNION
+
+    SELECT 
+        start_time AS startTime,
+        end_time AS endTime
+    FROM last_slot
+    WHERE end_time > start_time AND start_time >= :startTime
 )
 SELECT 
-    start_time AS startTime, 
-    end_time AS endTime 
-FROM free_slots
-WHERE start_time >= :startTime AND end_time <= :endTime
+    startTime, 
+    endTime
+FROM all_slots
 
 UNION
 
+-- TH1: Không có lịch nào => trả nguyên đoạn trống
 SELECT 
-    start_time AS startTime, 
-    end_time AS endTime 
-FROM first_slot 
-WHERE end_time > start_time AND end_time <= :endTime
-
-UNION
-
-SELECT 
-    start_time AS startTime, 
-    end_time AS endTime 
-FROM last_slot 
-WHERE end_time > start_time AND start_time >= :startTime
-
+    CAST(:startTime AS datetime) AS startTime,
+    CAST(:endTime AS datetime) AS endTime
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM schedule_with_bounds
+)
 ORDER BY startTime
 """, nativeQuery = true)
     List<FreeTimeSlot> getAvailableSlotsBetween(
@@ -137,5 +153,4 @@ ORDER BY startTime
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
-
 }
