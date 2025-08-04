@@ -6,6 +6,7 @@ import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.ScheduleConflictInfo;
 import com.UserSchedule.UserSchedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -139,6 +140,23 @@ public class ScheduleController {
         return ApiResponse.<ScheduleResponse>builder()
                 .message("Simple schedule created successfully")
                 .data(scheduleService.createSimpleSchedule(request))
+                .build();
+    }
+
+    @GetMapping("/conflicts")
+    @Operation(
+            summary = "Lấy danh sách lịch bị trùng",
+            description = """
+        Trả về danh sách lịch bị conflict trong khoảng thời gian chỉ định.
+        **Yêu cầu: người dùng đã đăng nhập.**
+        """)
+    public ApiResponse<List<ScheduleConflictInfo>> getScheduleConflicts(
+            @RequestParam("startTime") LocalDateTime startTime,
+            @RequestParam("endTime") LocalDateTime endTime
+    ) {
+        return ApiResponse.<List<ScheduleConflictInfo>>builder()
+                .message("Lấy danh sách lịch bị conflict thành công")
+                .data(scheduleService.getScheduleConflictInfo(startTime, endTime))
                 .build();
     }
 }

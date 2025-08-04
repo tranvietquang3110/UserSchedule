@@ -11,6 +11,7 @@ import com.UserSchedule.UserSchedule.exception.ErrorCode;
 import com.UserSchedule.UserSchedule.mapper.UserMapper;
 import com.UserSchedule.UserSchedule.repository.DepartmentRepository;
 import com.UserSchedule.UserSchedule.repository.IdentityClient;
+import com.UserSchedule.UserSchedule.repository.ScheduleRepository;
 import com.UserSchedule.UserSchedule.repository.UserRepository;
 import com.UserSchedule.UserSchedule.utils.SecurityUtils;
 import feign.FeignException;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,6 +41,7 @@ public class UserService {
     DepartmentRepository departmentRepository;
     IdentityClient identityClient;
     SecurityUtils securityUtils;
+    ScheduleRepository scheduleRepository;
     @Value("${keycloak.client-id}")
     @NonFinal
     String clientId;
@@ -204,5 +207,15 @@ public class UserService {
 
         identityClient.updateUserProfile(accessToken, user.getKeycloakId(), keycloakUserUpdateRequest);
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    public List<UserResponse> getUserInDepartmentConflict(String departmentName, LocalDateTime startTime, LocalDateTime endTime) {
+        if (!startTime.isBefore(endTime)) {
+            throw new AppException(ErrorCode.MIN_MAX_CAPACITY_CONFLICT);
+        }
+        if (departmentRepository.findByName(departmentName).isEmpty()) {
+            throw new AppException(ErrorCode.DEPARTMENT_NOT_FOUND);
+        }
+        return userMapper.toUserResponseList(scheduleRepository.findConflictedUsersByDepartment(departmentName, startTime, endTime));
     }
 }

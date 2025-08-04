@@ -13,9 +13,11 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -124,6 +126,16 @@ public class UserController {
     ) {
         userService.changePassword(userId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/conflicts")
+    @SecurityRequirement(name = "bearerAuth")
+    public List<UserResponse> getUsersWithConflictSchedule(
+            @RequestParam String departmentName,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
+    ) {
+        return userService.getUserInDepartmentConflict(departmentName, startTime, endTime);
     }
 }
 

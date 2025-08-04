@@ -47,6 +47,7 @@ public enum ErrorCode {
     SCHEDULE_NOT_FOUND(2109, "Schedule not found", HttpStatus.NOT_FOUND),
     ROOM_EXISTED(2110, "Room existed", HttpStatus.BAD_REQUEST),
     MIN_MAX_CAPACITY_CONFLICT(2111, "min, max conflict!", HttpStatus.BAD_REQUEST),
+    NO_AVAILABLE_PARTICIPANTS(2112,"No available participants", HttpStatus.BAD_REQUEST),
     // ==== Auth Errors (2200+) ====
     UNAUTHENTICATED(2200, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2201, "You don't have permission", HttpStatus.FORBIDDEN),

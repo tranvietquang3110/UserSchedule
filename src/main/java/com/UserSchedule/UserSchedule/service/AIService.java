@@ -43,12 +43,6 @@ public class AIService {
     public void askAI(String message, String keycloakId, String jwt) {
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        SendMessageToAgentRequest request = SendMessageToAgentRequest.builder()
-                .keycloakId(keycloakId)
-                .message(message)
-                .context(convertResponsesToString(getAIResponseByKeycloakId(keycloakId)))
-                .build();
-        log.info(request.toString());
         int order = aiConversationRepository.countByUser(user) + 1;
         AIConversation userMessage = AIConversation.builder()
                 .user(user)
@@ -57,6 +51,10 @@ public class AIService {
                 .role(AIConversationRoleType.USER.name())
                 .build();
         aiConversationRepository.save(userMessage);
+        SendMessageToAgentRequest request = SendMessageToAgentRequest.builder()
+                .keycloakId(keycloakId)
+                .conversation(convertResponsesToString(getAIResponseByKeycloakId(keycloakId)))
+                .build();
         callToAgent(request, jwt);
     }
 

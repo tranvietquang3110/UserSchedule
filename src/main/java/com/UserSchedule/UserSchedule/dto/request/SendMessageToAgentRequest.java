@@ -14,6 +14,5 @@ import java.util.List;
 @Builder
 public class SendMessageToAgentRequest {
     String keycloakId;
-    String message;
-    String context;
+    String conversation;
 }

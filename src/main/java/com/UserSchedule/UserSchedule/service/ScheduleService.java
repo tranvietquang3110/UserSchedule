@@ -4,7 +4,9 @@ import com.UserSchedule.UserSchedule.dto.request.ScheduleByDepartmentRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
+import com.UserSchedule.UserSchedule.dto.response.UserResponse;
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.ScheduleConflictInfo;
 import com.UserSchedule.UserSchedule.entity.Department;
 import com.UserSchedule.UserSchedule.entity.Room;
 import com.UserSchedule.UserSchedule.entity.Schedule;
@@ -13,6 +15,7 @@ import com.UserSchedule.UserSchedule.enum_type.ScheduleType;
 import com.UserSchedule.UserSchedule.exception.AppException;
 import com.UserSchedule.UserSchedule.exception.ErrorCode;
 import com.UserSchedule.UserSchedule.mapper.ScheduleMapper;
+import com.UserSchedule.UserSchedule.mapper.UserMapper;
 import com.UserSchedule.UserSchedule.repository.DepartmentRepository;
 import com.UserSchedule.UserSchedule.repository.RoomRepository;
 import com.UserSchedule.UserSchedule.repository.ScheduleRepository;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +40,7 @@ public class ScheduleService {
     UserRepository userRepository;
     RoomRepository roomRepository;
     ScheduleMapper scheduleMapper;
+    UserMapper userMapper;
     SecurityUtils securityUtils;
     DepartmentRepository departmentRepository;
 
@@ -87,6 +92,7 @@ public class ScheduleService {
         User currentUser = securityUtils.getCurrentUser();
         Department department = departmentRepository.findByName(departmentName)
                 .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
+
         int departmentId = department.getDepartmentId();
         boolean isAdmin = securityUtils.isAdmin();
         boolean isSameDepartment = Objects.equals(currentUser.getDepartment().getDepartmentId(), departmentId);
@@ -100,17 +106,27 @@ public class ScheduleService {
             throw new AppException(ErrorCode.DEPARTMENT_NOT_FOUND);
         }
 
-        Set<User> participants = new HashSet<>(departmentUsers);
+        // Lấy danh sách userId
+        List<Integer> userIds = departmentUsers.stream().map(User::getUserId).toList();
 
-        List<Integer> userIds = departmentUsers.stream()
-                .map(User::getUserId)
-                .toList();
-
+        // Lấy các lịch bị trùng của các user này
         List<Schedule> conflicts = scheduleRepository.findConflictingSchedulesByParticipants(
-                userIds, request.getStartTime(), request.getEndTime());
+                userIds, request.getStartTime(), request.getEndTime()
+        );
 
-        if (!conflicts.isEmpty()) {
-            throw new AppException(ErrorCode.SCHEDULE_CONFLICT);
+        // Lấy userId bị trùng lịch
+        Set<Integer> conflictedUserIds = conflicts.stream()
+                .flatMap(schedule -> schedule.getParticipants().stream())
+                .map(User::getUserId)
+                .collect(Collectors.toSet());
+
+        // Loại bỏ user bị trùng lịch
+        Set<User> availableParticipants = departmentUsers.stream()
+                .filter(user -> !conflictedUserIds.contains(user.getUserId()))
+                .collect(Collectors.toSet());
+
+        if (availableParticipants.isEmpty()) {
+            throw new AppException(ErrorCode.NO_AVAILABLE_PARTICIPANTS);
         }
 
         Schedule schedule = Schedule.builder()
@@ -118,10 +134,9 @@ public class ScheduleService {
                 .type(request.getType())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
-                .participants(participants)
+                .participants(availableParticipants)
                 .createdBy(currentUser)
                 .build();
-
 
         if (request.getType() == ScheduleType.OFFLINE) {
             Room room = roomRepository.findByName(request.getRoomName())
@@ -136,6 +151,7 @@ public class ScheduleService {
 
         return scheduleMapper.toScheduleResponse(scheduleRepository.save(schedule));
     }
+
 
     public List<ScheduleResponse> getSchedulesByKeycloakId(String keycloakId) {
         User user = userRepository.findByKeycloakId(keycloakId)
@@ -259,4 +275,13 @@ public class ScheduleService {
         Schedule saved = scheduleRepository.save(builder.build());
         return scheduleMapper.toScheduleResponse(saved);
     }
+
+    public List<ScheduleConflictInfo> getScheduleConflictInfo(LocalDateTime startTime, LocalDateTime endTime) {
+        if (!startTime.isBefore(endTime)) {
+            throw new AppException(ErrorCode.MIN_MAX_CAPACITY_CONFLICT);
+        }
+        return scheduleRepository.findConflictingSchedulesWithRoomAndUserInfo(startTime, endTime);
+    }
+
+
 }

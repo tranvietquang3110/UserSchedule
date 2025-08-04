@@ -1,7 +1,9 @@
 package com.UserSchedule.UserSchedule.repository;
 
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
+import com.UserSchedule.UserSchedule.dto.scheduleRepository.ScheduleConflictInfo;
 import com.UserSchedule.UserSchedule.entity.Schedule;
+import com.UserSchedule.UserSchedule.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -153,4 +155,39 @@ ORDER BY startTime
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+
+    @Query(value = """
+    SELECT 
+        r.name AS roomName,
+        CONCAT(u.firstname, ' ', u.lastname) AS fullName,
+        u.email AS email,
+        s.start_time AS startTime,
+        s.end_time AS endTime
+    FROM (
+        SELECT * FROM schedules 
+        WHERE start_time < :endTime AND end_time > :startTime
+    ) s
+    INNER JOIN (
+        SELECT * FROM rooms WHERE is_used = 1
+    ) r ON r.room_id = s.room_id
+    INNER JOIN users u ON u.user_id = s.created_by
+""", nativeQuery = true)
+    List<ScheduleConflictInfo> findConflictingSchedulesWithRoomAndUserInfo(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
+
+    @Query("""
+    SELECT DISTINCT u FROM Schedule s
+    JOIN s.participants u
+    WHERE u.department.name = :departmentName
+      AND s.startTime < :endTime
+      AND s.endTime > :startTime
+    """)
+    List<User> findConflictedUsersByDepartment(
+            @Param("departmentName") String departmentName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
+
 }
