@@ -27,6 +27,5 @@ public class ScheduleByDepartmentRequest {
     @Future(message = "END_TIME_MUST_BE_FUTURE")
     LocalDateTime endTime;
 
-    @NotNull(message = "ROOM_ID_NOT_FILL")
     String roomName;
 }
