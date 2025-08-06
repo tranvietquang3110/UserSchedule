@@ -2,6 +2,7 @@ package com.UserSchedule.UserSchedule.controller;
 
 import com.UserSchedule.UserSchedule.dto.request.ScheduleByDepartmentRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
+import com.UserSchedule.UserSchedule.dto.request.SchedulePatchRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -159,4 +161,39 @@ public class ScheduleController {
                 .data(scheduleService.getScheduleConflictInfo(startTime, endTime))
                 .build();
     }
+
+    @PatchMapping("/by-room-start")
+    @Operation(
+            summary = "Cập nhật một phần lịch bằng roomName và startTime",
+            description = """
+        Tìm lịch theo roomName và startTime (cũ), cập nhật các trường được cung cấp (bao gồm cả startTime mới nếu có).
+        """
+    )
+    public ApiResponse<ScheduleResponse> patchScheduleByRoomAndStartTime(
+            @RequestParam String roomName,
+            @RequestParam LocalDateTime startTime,
+            @RequestBody @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) SchedulePatchRequest request) {
+        return ApiResponse.<ScheduleResponse>builder()
+                .message("Patch schedule successfully")
+                .data(scheduleService.patchScheduleByRoomAndStartTime(roomName, startTime, request))
+                .build();
+    }
+
+    @DeleteMapping("/by-room-and-time")
+    @Operation(
+            summary = "Xoá lịch theo phòng và thời gian bắt đầu",
+            description = """
+        Xoá một lịch dựa trên roomName và startTime.
+        **Yêu cầu quyền: MANAGER (chỉ được xoá lịch do mình tạo) hoặc ADMIN**
+        """
+    )
+    public ApiResponse<?> deleteScheduleByRoomAndTime(
+            @RequestParam String roomName,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime) {
+        scheduleService.deleteScheduleByRoomAndStartTime(roomName, startTime);
+        return ApiResponse.builder()
+                .message("Delete schedule successfully")
+                .build();
+    }
+
 }

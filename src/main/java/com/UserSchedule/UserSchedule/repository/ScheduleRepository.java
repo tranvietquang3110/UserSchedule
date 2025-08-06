@@ -2,8 +2,10 @@ package com.UserSchedule.UserSchedule.repository;
 
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.FreeTimeSlot;
 import com.UserSchedule.UserSchedule.dto.scheduleRepository.ScheduleConflictInfo;
+import com.UserSchedule.UserSchedule.entity.Room;
 import com.UserSchedule.UserSchedule.entity.Schedule;
 import com.UserSchedule.UserSchedule.entity.User;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query("""
@@ -190,4 +193,5 @@ ORDER BY startTime
             @Param("endTime") LocalDateTime endTime
     );
 
+    Optional<Schedule> findByRoomAndStartTime(Room room, LocalDateTime startTime);
 }

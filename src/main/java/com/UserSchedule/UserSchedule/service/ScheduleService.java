@@ -2,6 +2,7 @@ package com.UserSchedule.UserSchedule.service;
 
 import com.UserSchedule.UserSchedule.dto.request.ScheduleByDepartmentRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleCreationRequest;
+import com.UserSchedule.UserSchedule.dto.request.SchedulePatchRequest;
 import com.UserSchedule.UserSchedule.dto.request.ScheduleUpdateRequest;
 import com.UserSchedule.UserSchedule.dto.response.ScheduleResponse;
 import com.UserSchedule.UserSchedule.dto.response.UserResponse;
@@ -244,6 +245,7 @@ public class ScheduleService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
     public ScheduleResponse createSimpleSchedule(ScheduleByDepartmentRequest request) {
         User currentUser = securityUtils.getCurrentUser();
 
@@ -254,7 +256,7 @@ public class ScheduleService {
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .createdBy(currentUser)
-                .participants(Collections.emptySet()); // Không cần participants
+                .participants(Collections.singleton(currentUser)); // Không cần participants
 
         // Nếu là OFFLINE thì cần room
         if (request.getType() == ScheduleType.OFFLINE) {
@@ -283,5 +285,85 @@ public class ScheduleService {
         return scheduleRepository.findConflictingSchedulesWithRoomAndUserInfo(startTime, endTime);
     }
 
+    @Transactional
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
+    public ScheduleResponse patchScheduleByRoomAndStartTime(String roomName, LocalDateTime startTime, SchedulePatchRequest request) {
+        User currentUser = securityUtils.getCurrentUser();
+
+        Room room = roomRepository.findByName(roomName)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+
+        Schedule schedule = scheduleRepository.findByRoomAndStartTime(room, startTime)
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        checkPermission(currentUser, schedule);
+
+        // Cập nhật nếu có
+        if (request.getTitle() != null) {
+            schedule.setTitle(request.getTitle());
+        }
+
+        if (request.getStartTime() != null) {
+            schedule.setStartTime(request.getStartTime());
+        }
+
+        if (request.getEndTime() != null) {
+            schedule.setEndTime(request.getEndTime());
+        }
+
+        if (request.getType() != null) {
+            schedule.setType(request.getType());
+            if (request.getType() != ScheduleType.OFFLINE) {
+                schedule.setRoom(null);
+            }
+        }
+
+        if (request.getRoomName() != null && schedule.getType() == ScheduleType.OFFLINE) {
+            Room newRoom = roomRepository.findByName(request.getRoomName())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+            schedule.setRoom(newRoom);
+        }
+        // Kiểm tra conflict nếu là OFFLINE và có thay đổi về thời gian hoặc phòng
+        if (schedule.getType() == ScheduleType.OFFLINE) {
+            Room effectiveRoom = schedule.getRoom(); // đã cập nhật rồi nếu roomId có
+            if (effectiveRoom == null) {
+                throw new AppException(ErrorCode.ROOM_NOT_FOUND); // hoặc ROOM_REQUIRED nếu type = OFFLINE
+            }
+            LocalDateTime effectiveStartTime = schedule.getStartTime();
+            LocalDateTime effectiveEndTime = schedule.getEndTime();
+
+            List<Schedule> conflictSchedules = scheduleRepository
+                    .findConflictingSchedulesByRoomExceptCurrent(
+                            effectiveRoom.getRoomId(),
+                            effectiveStartTime,
+                            effectiveEndTime,
+                            schedule.getScheduleId()
+                    );
+
+            if (!conflictSchedules.isEmpty()) {
+                throw new AppException(ErrorCode.ROOM_ALREADY_BOOKED);
+            }
+        }
+        return scheduleMapper.toScheduleResponse(scheduleRepository.save(schedule));
+    }
+
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
+    public void deleteScheduleByRoomAndStartTime(String roomName, LocalDateTime startTime) {
+        User currentUser = securityUtils.getCurrentUser();
+
+        // Tìm room theo tên
+        Room room = roomRepository.findByName(roomName)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+
+        // Tìm lịch theo room và startTime
+        Schedule schedule = scheduleRepository.findByRoomAndStartTime(room, startTime)
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        // Kiểm tra quyền
+        checkPermission(currentUser, schedule);
+
+        // Xoá
+        scheduleRepository.delete(schedule);
+    }
 
 }
