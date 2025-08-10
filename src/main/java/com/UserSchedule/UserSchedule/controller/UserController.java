@@ -1,5 +1,6 @@
 package com.UserSchedule.UserSchedule.controller;
 
+import com.UserSchedule.UserSchedule.dto.identity.RoleRepresentation;
 import com.UserSchedule.UserSchedule.dto.request.*;
 import com.UserSchedule.UserSchedule.dto.response.ApiResponse;
 import com.UserSchedule.UserSchedule.dto.response.TokenResponse;
@@ -136,6 +137,12 @@ public class UserController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
     ) {
         return userService.getUserInDepartmentConflict(departmentName, startTime, endTime);
+    }
+
+    @GetMapping("/role/{keycloakId}")
+    @SecurityRequirement(name = "bearerAuth")
+    public List<RoleRepresentation> getRoleUser(@PathVariable("keycloakId") String keycloakId) {
+        return userService.getUserRole(keycloakId);
     }
 }
 

@@ -54,4 +54,10 @@ public interface IdentityClient {
             @PathVariable("userId") String userId,
             @RequestBody CredentialRepresentation passwordRequest
     );
+
+    @GetMapping(value = "/admin/realms/UserSchedule/users/{userId}/role-mappings/realm",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    List<RoleRepresentation> getUserRealmRoles(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("userId") String userId);
 }

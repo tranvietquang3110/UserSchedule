@@ -218,4 +218,17 @@ public class UserService {
         }
         return userMapper.toUserResponseList(scheduleRepository.findConflictedUsersByDepartment(departmentName, startTime, endTime));
     }
+
+    public List<RoleRepresentation> getUserRole(String keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+
+        form.add("grant_type", "client_credentials");
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("scope", scope);
+        TokenExchangeResponse token = identityClient.getClientToken(form);
+        String accessToken = "Bearer " + token.getAccessToken();
+        return identityClient.getUserRealmRoles(accessToken, keycloakId);
+    }
 }
