@@ -6,6 +6,7 @@ import com.UserSchedule.UserSchedule.dto.response.TokenResponse;
 import com.UserSchedule.UserSchedule.dto.response.UserResponse;
 import com.UserSchedule.UserSchedule.entity.Department;
 import com.UserSchedule.UserSchedule.entity.User;
+import com.UserSchedule.UserSchedule.enum_type.RoleType;
 import com.UserSchedule.UserSchedule.exception.AppException;
 import com.UserSchedule.UserSchedule.exception.ErrorCode;
 import com.UserSchedule.UserSchedule.mapper.UserMapper;
@@ -229,6 +230,11 @@ public class UserService {
         form.add("scope", scope);
         TokenExchangeResponse token = identityClient.getClientToken(form);
         String accessToken = "Bearer " + token.getAccessToken();
-        return identityClient.getUserRealmRoles(accessToken, keycloakId);
+        List<RoleRepresentation> result = identityClient.getUserRealmRoles(accessToken, keycloakId);
+        return result.stream().filter(
+                roleRepresentation ->
+                        Objects.equals(roleRepresentation.getName(), RoleType.ADMIN.name())
+                                || Objects.equals(roleRepresentation.getName(), RoleType.USER.name())
+                                || Objects.equals(roleRepresentation.getName(), RoleType.MANAGER.name())).toList();
     }
 }

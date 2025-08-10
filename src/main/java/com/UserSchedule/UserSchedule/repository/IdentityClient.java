@@ -55,7 +55,7 @@ public interface IdentityClient {
             @RequestBody CredentialRepresentation passwordRequest
     );
 
-    @GetMapping(value = "/admin/realms/UserSchedule/users/{userId}/role-mappings/realm",
+    @GetMapping(value = "/admin/realms/UserSchedule/users/{userId}/role-mappings/realm/composite",
             produces = MediaType.APPLICATION_JSON_VALUE)
     List<RoleRepresentation> getUserRealmRoles(
             @RequestHeader("Authorization") String token,
