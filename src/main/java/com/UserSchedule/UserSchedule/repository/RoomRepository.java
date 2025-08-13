@@ -38,9 +38,10 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             SELECT s.room.roomId
             FROM Schedule s
             WHERE s.startTime < :endTime
-              AND s.endTime > :startTime
+              AND s.endTime > :startTime\s
+              AND s.type = "OFFLINE"
         )
-    """)
+   \s""")
     List<Room> findAvailableRoomsBetween(
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
