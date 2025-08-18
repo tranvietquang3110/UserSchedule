@@ -18,6 +18,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
     @Query("""
     SELECT new com.UserSchedule.UserSchedule.dto.roomRepository.RoomWithStatus(
+        r.roomId,
         r.name,
         r.location,
         r.capacity,
@@ -28,7 +29,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     )
     FROM Room r
     LEFT JOIN Schedule s ON s.room = r AND s.endTime > :now
-    GROUP BY r.name, r.location, r.capacity
+    GROUP BY r.name, r.location, r.capacity, r.roomId
     """)
     List<RoomWithStatus> findRoomsWithStatus(@Param("now") LocalDateTime now);
 
