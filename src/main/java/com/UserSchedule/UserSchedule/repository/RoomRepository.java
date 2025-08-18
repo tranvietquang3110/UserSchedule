@@ -29,6 +29,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     )
     FROM Room r
     LEFT JOIN Schedule s ON s.room = r AND s.endTime > :now
+    WHERE r.isUsed = true
     GROUP BY r.name, r.location, r.capacity, r.roomId
     """)
     List<RoomWithStatus> findRoomsWithStatus(@Param("now") LocalDateTime now);
